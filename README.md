@@ -16,12 +16,6 @@
 
 ---
 
-## Getting Started  
-
-### Prerequisites  
-- A modern browser (Chrome, Edge, Firefox, Safari).  
-- No external frameworks required – pure **HTML, CSS, JS**.  
-
 ### Installation  
 Clone the repository:  
 ```bash
@@ -34,9 +28,9 @@ Open `index.html` in your browser. That’s it.
 ---
 
 ## Tech Stack  
-- **HTML5 Canvas** – for precise wheel rendering.  
+- **HTML5 Canvas** – for precise wheel rendering. 
 - **CSS3** – neon glow, animations, responsive layout.  
-- **JavaScript (Vanilla)** – spin logic, dynamic options, sound integration.  
+- **JavaScript ** – spin logic, dynamic options, sound integration.  
 - **Tone.js** – lightweight audio synthesis for cyberpunk sound effects.  
 
 ---
