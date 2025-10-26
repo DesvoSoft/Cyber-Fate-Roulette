@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Fate Roulette</title>
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* BASE AND BACKGROUND */
+        :root {
+            /* Cold Neon and Bio-Cybernetic Palette */
+            --color-dark: #0A0A0F;
+            --color-mid-dark: #181828;
+            --color-gray: #4a5568;
+            --color-blue: #0077B6;
+            --color-cyan: #00C8FF;
+            --color-light-cyan: #80E9FF;
+            --color-flash: #B3E0FF; /* Blueish White for the flash */
+            --color-green-neon: #39FF14; /* Neon Green */
+        }
+
+        body {
+            font-family: 'Consolas', 'Courier New', monospace; /* Terminal Font */
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--color-light-cyan);
+            overflow: hidden; 
+            position: relative;
+            background: var(--color-dark);
+            /* Subtle grid background */
+            background-image: radial-gradient(circle, rgba(0, 200, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* -------------------------------------- */
+        /* Main Content */
+        /* -------------------------------------- */
+        .container {
+            position: relative; 
+            background: rgba(24, 24, 40, 0.95); 
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 
+                0 0 15px rgba(0, 200, 255, 0.6), 
+                0 0 30px rgba(0, 200, 255, 0.3); 
+            border: 1px solid var(--color-cyan);
+            width: 95%; 
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            z-index: 10;
+        }
+
+        h1 {
+            color: #FFFFFF; /* Changed to White to stand out */
+            /* Combined Cyan and Neon Green Shadow */
+            text-shadow: 
+                0 0 8px var(--color-cyan), 
+                0 0 15px var(--color-light-cyan),
+                0 0 15px var(--color-green-neon); 
+            margin-bottom: 10px;
+            animation: h1Glow 1.5s infinite alternate ease-in-out; /* Pulse animation */
+        }
+        
+        /* Pulse animation for the title */
+        @keyframes h1Glow {
+            from {
+                text-shadow: 0 0 8px var(--color-cyan), 0 0 10px var(--color-light-cyan);
+            }
+            to {
+                text-shadow: 0 0 15px var(--color-cyan), 0 0 25px var(--color-green-neon);
+            }
+        }
+
+        /* -------------------------------------- */
+        /* WHEEL AND PIN */
+        /* -------------------------------------- */
+        .wheel-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        #wheel-canvas {
+            /* Fix: Ensures it is square */
+            width: min(450px, 90vw); 
+            height: min(450px, 90vw);
+            aspect-ratio: 1 / 1; 
+            
+            border-radius: 50%;
+            border: 6px solid var(--color-cyan);
+            box-shadow: 
+                inset 0 0 10px rgba(0, 200, 255, 0.7),
+                0 0 20px var(--color-cyan); 
+            transition: transform 6s cubic-bezier(0.3, 1, 0.7, 1); 
+            transform: rotate(0deg);
+            z-index: 20; 
+        }
+
+        #pin {
+            position: absolute;
+            top: -20px; 
+            bottom: auto; 
+            left: 50%;
+            /* Pin pointing downwards from the top */
+            transform: translateX(-50%); 
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent; 
+            border-right: 15px solid transparent; 
+            border-top: 25px solid var(--color-green-neon); /* The tip points down */
+            z-index: 30; 
+            filter: drop-shadow(0 0 10px var(--color-green-neon)); /* Neon green shadow */
+        }
+
+        /* Removed .destello and @keyframes blink from the wheel */
+
+        /* -------------------------------------- */
+        /* BUTTONS AND LISTS */
+        /* -------------------------------------- */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--color-blue);
+            background-color: var(--color-dark);
+            color: var(--color-light-cyan);
+            box-shadow: 0 0 5px rgba(0, 119, 182, 0.5);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--color-cyan);
+            box-shadow: 0 0 10px var(--color-cyan);
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            filter: brightness(1.3);
+            transform: translateY(-1px);
+        }
+        button:active {
+             transform: translateY(0);
+        }
+
+        .btn-add {
+            background-color: var(--color-blue);
+            color: var(--color-light-cyan);
+            box-shadow: 0 4px var(--color-gray);
+        }
+
+        .btn-spin {
+            background-color: var(--color-cyan);
+            color: var(--color-dark);
+            font-size: 1.3em;
+            padding: 15px 30px;
+            box-shadow: 
+                0 6px var(--color-blue), 
+                0 0 20px var(--color-cyan);
+            animation: spinPulse 2s infinite ease-in-out; /* Pulse animation for the button */
+        }
+
+        .btn-spin:disabled {
+            background-color: var(--color-gray);
+            box-shadow: 0 4px var(--color-dark);
+            cursor: not-allowed;
+            color: #ccc;
+            animation: none; /* No animation when disabled */
+        }
+        
+        /* Pulse animation for the spin button */
+        @keyframes spinPulse {
+            0% { box-shadow: 0 6px var(--color-blue), 0 0 10px var(--color-cyan); }
+            50% { box-shadow: 0 6px var(--color-blue), 0 0 30px var(--color-cyan); }
+            100% { box-shadow: 0 6px var(--color-blue), 0 0 10px var(--color-cyan); }
+        }
+
+        #options-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 40px;
+            padding: 10px;
+            border: 1px dashed rgba(57, 255, 20, 0.5); 
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .option-tag {
+            background-color: var(--color-gray);
+            color: var(--color-light-cyan);
+            padding: 8px 12px; /* Clean space without the 'X' */
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            cursor: pointer; /* Indicate it's interactive */
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .option-tag:hover {
+            background-color: rgba(57, 255, 20, 0.2); /* Subtle neon green highlight */
+            border: 1px solid var(--color-green-neon);
+        }
+
+        
+        .modal-close-btn {
+            margin-top: 20px;
+            background-color: var(--color-blue);
+            color: var(--color-light-cyan);
+            padding: 8px 15px;
+            font-size: 1em;
+            box-shadow: 0 4px var(--color-gray);
+            transition: all 0.2s;
+        }
+
+        #result {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--color-light-cyan);
+            text-shadow: 0 0 10px var(--color-light-cyan), 0 0 10px var(--color-green-neon);
+            min-height: 30px;
+        }
+        
+        /* -------------------------------------- */
+        /* MODAL WITH FLASH AND TEXT HIGHLIGHT */
+        /* -------------------------------------- */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: flex-start; 
+            padding-top: 5vh; 
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--color-mid-dark);
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 30px var(--color-cyan);
+            border: 2px solid var(--color-cyan);
+            transform: scale(0.9);
+            animation: bounceIn 0.3s forwards;
+            z-index: 1010;
+        }
+
+        .modal-title {
+            color: var(--color-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 10px var(--color-cyan), 0 0 5px var(--color-green-neon);
+            margin-bottom: 10px;
+        }
+
+        .modal-message span {
+            color: var(--color-light-cyan);
+            /* Highlight for the modal text */
+            text-shadow: 0 0 10px var(--color-cyan), 0 0 10px var(--color-green-neon); 
+        }
+        
+        /* Flash for the modal */
+        .modal-flash {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); 
+            width: 95%; 
+            height: 95%;
+            border-radius: 10px;
+            background: radial-gradient(circle, var(--color-flash) 0%, transparent 80%);
+            box-shadow: 0 0 50px 25px rgba(179, 224, 255, 0.5);
+            opacity: 0;
+            animation: blink 0.3s forwards; 
+            pointer-events: none;
+            z-index: -1; 
+        }
+        
+        /* Re-added blink animation that was needed for the modal flash */
+        @keyframes blink {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); } 
+        }
+
+
+        /* -------------------------------------- */
+        /* MEDIA QUERIES (RESPONSIVE) */
+        /* -------------------------------------- */
+        @media (min-width: 768px) { 
+            .container {
+                flex-direction: row;
+                gap: 40px;
+            }
+
+            .controls {
+                flex: 1;
+                min-width: 300px;
+            }
+
+            .wheel-container {
+                flex: 2; 
+                max-width: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Container -->
+    <div class="container">
+        
+    <!-- Controls and Options List -->
+    <div class="controls">
+            <h1>CYBER FATE ROULETTE</h1>
+            <p>Input your game choices. The system will decide your next entertainment destiny.</p>
+            
+            <div class="input-group">
+                <input type="text" id="option-input" placeholder="" maxlength="25">
+                <button class="btn-add" id="add-option-btn">Add Game</button>
+            </div>
+
+            <div id="options-list">
+                <!-- Options will be rendered here -->
+            </div>
+
+            <button class="btn-spin" id="spin-btn">INITIATE SEQUENCE</button>
+            
+            <div id="result"></div>
+        </div>
+
+    <!-- Wheel Container -->
+    <div class="wheel-container">
+            
+    <!-- Wheel Pin (Top) -->
+    <div id="pin"></div>
+            <canvas id="wheel-canvas">
+                Your browser does not support Canvas.
+            </canvas>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="modal">
+        <div class="modal-content">
+            <div id="modal-flash-container"></div>
+            <div class="modal-title">GAME SELECTED</div>
+            <div class="modal-message" id="modal-message-text"></div>
+            <button class="modal-close-btn" onclick="closeModal()">CLOSE WINDOW</button>
+        </div>
+    </div>
+
+
+    <script>
+        // DOM Elements
+        const optionInput = document.getElementById('option-input');
+        const addOptionBtn = document.getElementById('add-option-btn');
+        const optionsList = document.getElementById('options-list');
+        const spinBtn = document.getElementById('spin-btn');
+        const wheelCanvas = document.getElementById('wheel-canvas'); 
+        const ctx = wheelCanvas.getContext('2d'); 
+        const wheelContainer = document.querySelector('.wheel-container');
+        const resultDisplay = document.getElementById('result');
+        const resultModal = document.getElementById('result-modal');
+        const modalMessageText = document.getElementById('modal-message-text');
+        const modalContent = document.querySelector('.modal-content');
+
+        // Canvas Constants (Dynamic variables)
+        let CANVAS_SIZE;
+        let CENTER_X;
+        let CENTER_Y;
+        let RADIUS;
+
+        // Application State
+        let options = [];
+        let isSpinning = false;
+        let finalIndex = -1; 
+        
+        // Constant for converting degrees to radians
+        const TO_RADIANS = Math.PI / 180;
+        
+        // FORBIDDEN GAMES: Known for their competitive nature or toxicity
+        const FORBIDDEN_GAMES = [
+            "LEAGUE OF LEGENDS",
+            "LOL",
+            "VALORANT",
+            "DOTA 2",
+            "OVERWATCH",
+            "CS2",
+            "COUNTER-STRIKE 2",
+            "RAINBOW SIX SIEGE",
+            "R6 SIEGE",
+            "FIFA", 
+            "APEX LEGENDS",
+            "FORTNITE"
+        ].map(g => g.toUpperCase()); // Normalized to uppercase for case-insensitive check
+        
+        // ORACLE MESSAGES: Cryptic phrases to accompany the result
+        const ORACLE_MESSAGES = [
+            "The data stream confirms your path.",
+            "A new protocol is now initiating.",
+            "The simulation demands resolution.",
+            "Your fate is written in the binary code.",
+            "Execute the chosen destiny.",
+            "The Network whispers the selection.",
+            "Destiny has been compiled.",
+            "The future is now loading...",
+            "Only the chosen path remains.",
+            "The Gacha Protocol is complete.",
+            "Accept the mandate of the system.",
+            "The algorithm has decided.",
+            "A new quest line is available.",
+            "Access granted to the mainframe selection."
+        ];
+
+
+        // --------------------------------------
+        // AUDIO CONFIGURATION (TONE.JS)
+        // --------------------------------------
+
+        // Synth for a subtle "glitch" or "charge" digital sound
+        const spinSynth = new Tone.Synth({
+            oscillator: { type: 'triangle' },
+            envelope: {
+                attack: 0.01,
+                decay: 0.05,
+                sustain: 0,
+                release: 0.1
+            }
+        }).toDestination();
+
+        // Synth for the result notification (Digital alert)
+        const winSynth = new Tone.PluckSynth({
+            envelope: {
+                attack: 0.005,
+                decay: 0.2,
+                sustain: 0,
+                release: 0.1,
+            }
+        }).toDestination();
+
+        /** Plays a subtle digital tone to simulate the start of the spin. */
+        function playSpinSound() {
+            const now = Tone.now();
+            spinSynth.triggerAttackRelease("G4", "16n", now);
+            spinSynth.triggerAttackRelease("G5", "16n", now + 0.05);
+        }
+
+        /** Plays an ascending alert for the result. */
+        function playWinSound() {
+            winSynth.triggerAttackRelease("C5", "8n", Tone.now());
+            winSynth.triggerAttackRelease("G5", "8n", Tone.now() + 0.1);
+            winSynth.triggerAttackRelease("C6", "8n", Tone.now() + 0.2);
+        }
+        
+        // Cold color palette (Blue/Cyan/Gray)
+        const SEGMENT_COLORS = [
+            '#00BCD4', // Bright Cyan
+            '#0077B6', // Primary Blue
+            '#4a5568', // Medium Gray
+            '#00C8FF', // Neon Cyan
+            '#005B92', // Dark Blue
+            '#2c3e50', // Blueish Gray
+            '#80E9FF', // Light Turquoise
+            '#3498DB', // Sky Blue
+        ]; 
+        
+        // --------------------------------------
+        // 0. CANVAS SIZE MANAGEMENT AND RESPONSIVENESS
+        // --------------------------------------
+
+        /** Dynamically adjusts the canvas size to ensure it's square. */
+        function resizeCanvas() {
+            // Uses the visible DOM size
+            const currentSize = wheelCanvas.clientWidth; 
+            
+            // Ensures the internal canvas (where drawing happens) matches the DOM size.
+            wheelCanvas.width = currentSize;
+            wheelCanvas.height = currentSize;
+
+            // Update global constants
+            CANVAS_SIZE = currentSize;
+            CENTER_X = CANVAS_SIZE / 2;
+            CENTER_Y = CANVAS_SIZE / 2;
+            RADIUS = (CANVAS_SIZE / 2) - 6; 
+
+            drawWheel(); 
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        document.addEventListener('DOMContentLoaded', resizeCanvas); 
+
+        // --------------------------------------
+        // 1. OPTION HANDLING
+        // --------------------------------------
+
+        /** Adds an option to the list if valid. */
+        function addOption() {
+            const value = optionInput.value.trim();
+            const normalizedValue = value.toUpperCase(); // Normalize for search
+            
+            // 1. CHECK FOR FORBIDDEN GAMES
+            if (FORBIDDEN_GAMES.includes(normalizedValue)) {
+                showForbiddenMessage(value);
+                optionInput.value = '';
+                return; 
+            }
+
+            // 2. CHECK FOR VALID VALUES
+            if (value && !options.includes(value)) {
+                options.push(value);
+                optionInput.value = '';
+                renderOptions();
+                drawWheel();
+            } else if (!value) {
+                showMessage('Input Error', 'Game name is required.'); // Text Updated
+            } else {
+                showMessage('Input Error', 'Game already added.'); // Text Updated
+            }
+        }
+
+        /** Removes an option from the list. */
+        function removeOption(optionToRemove) {
+            options = options.filter(option => option !== optionToRemove);
+            renderOptions();
+            drawWheel();
+        }
+
+        /** Renders the list of options and updates the spin button. */
+        function renderOptions() {
+            optionsList.innerHTML = '';
+            options.forEach(option => {
+                const tag = document.createElement('div');
+                tag.className = 'option-tag';
+                tag.textContent = option;
+                
+                // Remove the option when clicking the tag
+                tag.onclick = () => removeOption(option); 
+
+                optionsList.appendChild(tag);
+            });
+
+            spinBtn.disabled = options.length < 2;
+            // Text Updated
+            spinBtn.textContent = options.length < 2 ? `Add ${2 - options.length} more games` : 'INITIATE SEQUENCE'; 
+        }
+
+        // --------------------------------------
+        // 2. WHEEL DRAWING AND LOGIC (CANVAS)
+        // --------------------------------------
+        
+        /** Draws all segments of the wheel on the canvas. (Removed glow/highlight) */
+        function drawWheel() { 
+            if (options.length === 0 || !CANVAS_SIZE) {
+                ctx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+                return;
+            }
+
+            const segmentCount = options.length;
+            const segmentAngle = 360 / segmentCount;
+            let currentAngle = 0;
+            
+            // Clear canvas and reset general shadow
+            ctx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = 'transparent';
+
+            for (let i = 0; i < segmentCount; i++) {
+                const option = options[i];
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + segmentAngle;
+
+                // 1. Draw the Segment
+                ctx.beginPath();
+                ctx.moveTo(CENTER_X, CENTER_Y);
+                ctx.arc(CENTER_X, CENTER_Y, RADIUS, startAngle * TO_RADIANS, endAngle * TO_RADIANS);
+                ctx.closePath();
+                ctx.fillStyle = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+                ctx.fill();
+                
+                // 2. Draw the Border (Standard border)
+                ctx.shadowBlur = 0; 
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // 3. Draw the Text
+                ctx.save(); 
+                ctx.translate(CENTER_X, CENTER_Y);
+                const textAngle = startAngle + segmentAngle / 2;
+                ctx.rotate(textAngle * TO_RADIANS);
+
+                ctx.fillStyle = 'white'; 
+                ctx.font = 'bold 14px "Consolas", monospace'; 
+                ctx.textAlign = 'right'; 
+                ctx.textBaseline = 'middle'; 
+
+                // Neon shadow effect (Cyan and Green) for text
+                ctx.shadowColor = i % 2 === 0 ? '#00C8FF' : '#39FF14'; 
+                ctx.shadowBlur = 6;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                let displayOption = option.length > 15 ? option.substring(0, 15) + '...' : option;
+                const textDistance = RADIUS * 0.8; 
+                ctx.fillText(displayOption.toUpperCase(), textDistance - 5, 0); 
+                
+                ctx.restore(); 
+
+                currentAngle = endAngle;
+            }
+        }
+
+        /** Starts the spin animation, aligning the winner with the pin (270 degrees - bottom). */
+        function spinWheel() {
+            if (isSpinning || options.length < 2) {
+                showMessage('Alert', 'The roulette requires at least two games to spin.'); // Text Updated
+                return;
+            }
+            
+            // Start audio context
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+
+            // Reset highlight before spin
+            finalIndex = -1; 
+            drawWheel(); 
+            playSpinSound(); 
+
+            isSpinning = true;
+            spinBtn.disabled = true;
+            resultDisplay.textContent = 'Processing Selection...'; 
+            
+            // Glitch effect removed
+
+            // Reset rotation to 0 before applying the new transition
+            wheelCanvas.style.transition = 'none'; 
+            wheelCanvas.style.transform = 'rotate(0deg)'; 
+            void wheelCanvas.offsetWidth; 
+
+            const segmentCount = options.length;
+            const segmentAngle = 360 / segmentCount;
+            const chosenIndex = Math.floor(Math.random() * segmentCount);
+            const winningOption = options[chosenIndex];
+
+            // 270 degrees is the bottom, where the pin points.
+            const centerOfWinningSegment = chosenIndex * segmentAngle + segmentAngle / 2; 
+            
+            // Calculate the angle so the center of the winning segment points to 270 degrees
+            let targetAngle = 360 - (centerOfWinningSegment - 270); 
+
+            while (targetAngle < 0) { targetAngle += 360; }
+
+            const extraSpins = 5; // 5 full spins
+            const randomOffset = Math.random() * 10 - 5; // Slight offset so it doesn't always land exactly in the center
+            const finalRotation = targetAngle + (360 * extraSpins) + randomOffset; 
+
+            wheelCanvas.style.transition = 'transform 6s cubic-bezier(0.3, 1, 0.7, 1)'; 
+            wheelCanvas.style.transform = `rotate(${finalRotation}deg)`;
+
+            // The flash and finalization logic
+            setTimeout(() => {
+                isSpinning = false;
+                spinBtn.disabled = false;
+                
+                // Glitch effect removed
+
+                finalIndex = chosenIndex; // Store the winning index
+                
+                resultDisplay.textContent = `SELECTED: ${winningOption.toUpperCase()}`;
+                
+                // Trigger flash on the entire wheel container (no size needed, CSS takes care of it)
+                triggerDestello(wheelContainer); 
+                
+                // Redraw wheel without highlight (drawWheel() no longer accepts an index)
+                drawWheel(); 
+
+                showModal(winningOption);
+            }, 6000); 
+        }
+        
+        /** Creates and animates the neon flash. */
+        function triggerDestello(targetElement) {
+            const destello = document.createElement('div');
+            
+            // The wheel flash uses .destello style, which was removed from CSS. 
+            // We use the simpler .modal-flash style for a generic effect instead.
+            destello.classList.add('modal-flash');
+            
+            // Adjusting position for the wheel container
+            if (targetElement === wheelContainer) {
+                 destello.style.position = 'absolute';
+                 destello.style.width = '100%';
+                 destello.style.height = '100%';
+                 destello.style.borderRadius = '50%';
+            } else {
+                 destello.style.borderRadius = '10px';
+            }
+
+
+            targetElement.appendChild(destello);
+
+            setTimeout(() => {
+                destello.remove();
+            }, 300); // Duration of the blink animation
+        }
+
+        // --------------------------------------
+        // 3. MODAL AND MESSAGES
+        // --------------------------------------
+
+        /** Shows the modal with the result. */
+        function showModal(winningOption) {
+            playWinSound(); 
+            
+            // Select cryptic message
+            const crypticMessage = ORACLE_MESSAGES[Math.floor(Math.random() * ORACLE_MESSAGES.length)];
+
+            // 1. Show the modal
+            resultModal.querySelector('.modal-title').textContent = 'GAME SELECTED'; 
+            
+            // Content includes the cryptic message and the final game result
+            modalMessageText.innerHTML = `
+                <p style="font-size: 1.1em; color: var(--color-light-cyan); margin-bottom: 15px;">
+                    // ORACLE: ${crypticMessage} //
+                </p>
+                <p>Your entertainment destiny is: <br>
+                    <span style="font-size: 1.5em; text-transform: uppercase;">${winningOption}</span>
+                </p>
+            `; 
+            resultModal.style.display = 'flex';
+            
+            // 2. Activate the flash on the modal
+            triggerDestello(modalContent); 
+        }
+        
+        /** Shows a mystical message when attempting to add a forbidden game. */
+        function showForbiddenMessage(gameName) {
+            // Start audio context (if not active)
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+            
+            // Dramatic and low tone for the warning message
+            spinSynth.triggerAttackRelease("C2", "0.5", Tone.now()); 
+            
+            const mysticalMessage = `
+                <p style="font-size: 1.1em; color: #FFD700; text-shadow: 0 0 8px #FFD700;">
+                    // CORRUPTION ALERT //
+                </p>
+                <p style="font-size: 1.3em;">
+                    The Roulette Nexus rejects the input of
+                    <span style="color: var(--color-green-neon); text-transform: uppercase;">${gameName}</span>.
+                </p>
+                <p style="font-size: 1.1em; margin-top: 15px;">
+                    The Oracle invites you to explore new digital horizons,
+                    where time is spent in joy and not in the spiral of toxicity.
+                    <br>Seek the light in other codes.
+                </p>
+            `;
+
+            resultModal.querySelector('.modal-title').textContent = 'REJECTION PROTOCOL ACTIVE'; 
+            modalMessageText.innerHTML = mysticalMessage;
+            resultModal.style.display = 'flex';
+            
+            triggerDestello(modalContent); 
+        }
+
+        /** Closes the modal. */
+        function closeModal() {
+            resultModal.style.display = 'none';
+            finalIndex = -1; // Reset winning index
+            drawWheel(); // Redraw normal wheel
+        }
+
+        /** Shows a generic message in the modal (used for simple errors). */
+        function showMessage(title, message) {
+            resultModal.querySelector('.modal-title').textContent = title;
+            modalMessageText.innerHTML = message;
+            resultModal.style.display = 'flex';
+        }
+
+        // --------------------------------------
+        // 4. EVENT LISTENERS AND INITIALIZATION
+        // --------------------------------------
+
+        addOptionBtn.addEventListener('click', addOption);
+        optionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { addOption(); }
+        });
+        spinBtn.addEventListener('click', spinWheel);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Example options to start the roulette (Recent popular games)
+            options = ["Dragon's Dogma 2", "Helldivers 2", "Stellar Blade", "Final Fantasy VII Rebirth", "Prince of Persia: The Lost Crown"];
+            renderOptions();
+            resizeCanvas(); 
+        });
+    </script>
+</body>
+</html>
